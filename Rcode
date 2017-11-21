@@ -1,0 +1,57 @@
+### That that both regular and playoff games are extracted, as well as "empty" pages (non-active days)
+
+##### REQUIRED PACKAGES
+library(XML)
+library(RCurl)
+library(rlist)
+library(stringr)
+
+#Set your Workdirectory
+setwd("H:/My Documents/Pers/NHL/DATA/TEST")
+
+for(y in 2014:2018) { #Loop for years of interest
+  
+  for(m in 1:12) { #Loop for months of interest
+    
+    for(d in 1:31) { #Loop for days of interest
+      
+      URLstr <- paste("https://www.hockey-reference.com/friv/dailyleaders.cgi?year=",y,"&month=",m,"&day=",d, sep = "") #website with table
+      
+      #print(URLstr)
+      theurl <- getURL(URLstr,.opts = list(ssl.verifypeer = FALSE) )
+      tables <- readHTMLTable(theurl)
+      tables <- list.clean(tables, fun = is.null, recursive = FALSE)
+      n.rows <- unlist(lapply(tables, function(t) dim(t)[1]))
+      
+      #print(tables)
+      
+      skaterstable <- tables['skaters'] #split skater dataframe from goalie dataframe
+      goaliestable <- tables['goalies']
+      
+      #rename the columns more descriptive
+      tryCatch(colnames(skaterstable[[1]]) <- list("Rank","Player","Position","Team","H/A","Opposition","Result","BoxScore","Goals","Assists","Points","+/-",
+                                          "PIM","G_ev","G_PP","G_SH","GWG","A_ev","A_PP","A_SH","Shots","Shot%","Shifts","TOI","Hits","Blocks","FOW","FOL","FO%")
+               , error = function(e) print("Error colnames"))
+      
+      #convert to dataframe (without embeeding in list)  
+      HREFskaters <- do.call("rbind", skaterstable)
+      
+      #Grab the gamedate
+      tryCatch(Gamedate <- as.Date(paste(y,m,d,sep = "-")), error = function(e) print("Error gamedate"))
+      
+      #Add gamedate column to dataset and add gamedate value
+      tryCatch(HREFskaters$gamedate <- format(Gamedate, format="%B-%d-%Y"), error = function(e) print("Error date format"))
+      
+      #write to csv per gamedate
+      write.csv(HREFskaters, file = paste("HRefDailyLeaders",m,d,y,".csv",sep = "-"), row.names = FALSE) # write the file to csv (without automatically created row names) in the workdirectory
+      
+    }
+  }
+}
+
+#To combine all csv files use CMD in Windows > copy *.csv combined.csv
+
+ 
+
+
+
