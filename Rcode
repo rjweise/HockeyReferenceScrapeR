@@ -50,7 +50,7 @@ for(y in 2014:2018) { #Loop for years of interest
 }
 
 #To combine all csv files use CMD in Windows > copy *.csv combined.csv
-
+#OR on a Mac > cat *.csv > combined.csv
  
 
 
